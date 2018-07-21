@@ -5,4 +5,4 @@ This assignment features three shell programs that operate on a collection of ph
 
 - mkpics will generate an html file to display a table of photos.
 
-- mkpics2 will extend mkpics to handle the directories created by the second program.
+- mkpics2 will extend mkpics to be able to handle and output an html file based on  the directories created by the filepics program.
