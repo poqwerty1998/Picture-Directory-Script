@@ -1,0 +1,46 @@
+#!/bin/sh
+
+# add the exiftime script to the path for use
+PATH=$PATH:/courses/courses/cscb09s18/bin
+directory=$1
+cd $directory 2>/dev/null
+# if there is something wrong with accessing the directory
+if [ $? -ne 0 ]
+then
+    echo error: something wrong with accessing directory: $directory. >&2
+    exit 1
+# if there are no arguments
+elif [ $# -lt 1 ]
+then
+    echo error: no directory given. >&2
+    exit 1
+fi
+
+# ___________________________________________________________________________________
+
+# loop through all files in current directory, only interested in .jpg files
+for i in *
+do
+    # extract date informations from exiftime script
+    date=`exiftime -tg "$i" | cut -c18-27` 2>/dev/null
+    # if there is no error when using exiftime on an image
+    if [ $? -eq 0 ]
+    then
+        year=`echo $date | cut -c1-4`
+        month=`echo $date | cut -c6-7`
+        # if the year or date variable is empty, then there was something with exiftime so do not do anything to the current image
+        if [ "$year" != "" ] && [ "$month" != "" ]
+        then
+            # make the directory
+            mkdir $year 2>/dev/null
+            mkdir $year/$month 2>/dev/null
+            # move the file into the directory created
+            cp "$i" ./$year/$month
+            rm "$i"
+        fi
+    # if there is something wrong with using exiftime on an image, do nothing to it
+    elif [ $? -eq 1 ]
+    then
+        echo Something wrong with "$i".
+    fi
+done

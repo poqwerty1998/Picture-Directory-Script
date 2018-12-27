@@ -1,0 +1,111 @@
+#!/bin/sh
+numColumns=$1
+errors=""
+
+# check if there are no arguments
+if [ $# -eq 0 ]
+then
+    echo error: no arguments given. >&2
+    exit 1
+fi
+# check if there are too many arguments
+if [ $# -gt 2 ]
+then
+    echo error: number of arguments must be 2 or less. >&2
+    exit 1
+fi
+# attempt to do arithmetic on the first argument
+firstArg=`expr $1 + 1` 2>/dev/null
+# check exit status of previous expr expression: if it was not 0 then it was not valid
+if [ $? != 0 ] || [ $1 -lt 0 ]
+then
+    echo error: first argument must be a positive integer. >&2
+    exit 1
+fi
+
+# check if the second argument's file type is a directory
+directory=`file -b $2 | grep directory`
+if [ "$directory" = "" ]
+then
+    echo error: second argument must be a directory. >&2
+    exit 1
+fi
+# go into directory
+cd "$2"
+echo "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//EN>"
+echo "<html>"
+echo "  <head>"
+echo "    <title>Pictures</title>"
+echo "  </head>"
+echo ""
+echo "  <body>"
+echo "    <h1>Pictures</h1>"
+# check if current directory is empty
+files=`echo *`
+if [ "$files" = "*" ]
+then
+echo "    <h2></h2>"
+echo "    <table>"
+echo "      <tr>"
+echo "      </tr>"
+echo "    </table>"
+else
+# loop through all the current files inside the directory
+    for year in *
+    do
+        dir=`file -b $year | grep directory`
+        # if the current file is a directory
+        if [ "$dir" != "" ]
+        then
+echo "    <h2>$year</h2>"
+echo "    <table>"
+echo "      <tr>"
+            # go into the year directory created
+            cd "$year"
+            # counter for current column
+            column=0
+            for month in *
+            do
+                cd "$month"
+                # loop through all files in arguments
+                for picture in *
+                do
+                    # use the file function to get the file type
+                    fileType=`file -b "$picture" | grep JPEG`
+
+                    # if file is type JPEG, then print the cell containing the picture
+                    if [ "$fileType" != "" ]
+                    then
+echo "            <td><img src=\"$year/$month/$picture\" height=100></td>"
+                        # increase the current column counter
+                        column=`expr $column + 1`
+                    else
+                        # if the file is not a JPEG, append error to error message to output
+                        errors="$errors$picture "
+                    fi
+
+                    # if the column counter is the same as the number of columns specified by the argument
+                    if [ $column -eq $numColumns ]
+                    then
+                        # reset the column counter back to 0
+                        column=0
+echo "      </tr>"
+echo "      <tr>"
+                    fi
+                done
+                cd ..
+            done
+            # go back to the root directory
+            cd ..
+        fi
+    done
+echo "      </tr>"
+echo "    </table>"
+fi
+echo "  </body>"
+echo "</html>"
+# if there was an error with the files
+if [ "$errors" != "" ]
+then
+    echo "$errors: not JPEG files." >&2
+fi
